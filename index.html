@@ -1,0 +1,275 @@
+<!-- (c) 2017 Adán L. Benito, Parham Bahadoran, Thomas Vassallo. All rights reserved. -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>SinusoidalModel</title>
+    <!-- Jquery javascript -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.js"></script>
+    <script src="js/context-check.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.3.2/wavesurfer.min.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js-library/math.js"></script>
+    <script src="js-library/fft.js"></script>
+
+    <script src="js/bh92generator.js"></script>
+    <script src="js/pickPeaks.js"></script>
+    <script src="js/interpolatedValues.js"></script>
+    <script src="js/maxMinIndex.js"></script>
+    <script src="js/pitchDetection.js"></script>
+    <script src="js/TWM.js"></script>
+    <script src="js/unwrap2Pi.js"></script>
+    <script src="js/createNewTrack.js"></script>
+    <script src="js/peakTrackSimple.js"></script>
+    <script src="js/sineFillSpectrum.js"></script>
+
+    <script src="js/analysis.js"></script>
+
+    <script src="js-library/jquery-csv.js"></script>
+    <script src="js-library/jQueryKnob.js"></script>
+    <script src="js-library/jqueryprogressbar.js"></script>
+
+    <link rel="stylesheet" href="css/stylesheet.css" type="text/css">
+
+    <!-- Stylesheets Import -->
+    
+    <!-- Bootstrap compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Bootstrap JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+  </head>
+  <body>
+  
+  <div class="container" style="background:#fff; padding-bottom: 50px; padding-top: 20px;">
+
+    <h2 style="text-align:center;" class="sinusoidTitle">Sinusoidal Model</h2>
+
+  <br>
+  <br>
+  <br>
+
+    <div id="waveformControl" class="hidden">
+      <div class="row" style="text-align: center">
+        <button class="btn btn-primary" onclick="wavesurfer.playPause()">
+          <i class="glyphicon glyphicon-play"></i>
+          Play/Pause
+        </button>
+      </div>
+      <div class="row">
+        <div id="waveform"></div>
+      </div>
+      <div class="row">
+        <div class="col-md-4" style="text-align: right">
+          <i class="glyphicon glyphicon-zoom-out"></i>
+        </div>
+
+        <div class="col-md-4">
+          <input id="slider" type="range" min="1" max="10000" value="1" style="width: 100%"/>
+        </div>
+
+        <div class="col-md-4">
+          <i class="glyphicon glyphicon-zoom-in"></i>
+        </div>
+      </div>
+    </div>
+    <br>
+    <br>
+
+    <div class="row" id="inputPanel">
+      <p style="text-align: center">Select an audio sample to be analysed or analyse one of the presets:</p>
+    </div>
+    <br>
+    <br>
+      <div class="row" id="inputPanel">
+
+      <div class="col-md-2 col-md-offset-3">
+        <label class="fileContainer">
+          Select Audio File:
+          <input type="file" id="audioInput" accept="audio/*">
+        </label>
+      </div>
+      
+
+      <div class="col-md-2 col-md-offset-3">
+        <select id="audioSelect">
+          <option value='audio/OboeC4.wav'>Oboe</option>
+          <option value='audio/SaxC4.wav'>Saxophone</option>
+          <option value="audio/Metal.wav">Metal Hit</option>
+          <option value="audio/PoliceSiren.wav">Police Siren</option>
+        </select>
+
+        <button id='analysisPresetButton' class="btn btn-primary">
+          <i class="glyphicon glyphicon-eye-open"></i>
+          Select
+        </button>
+      </div>
+
+    </div>
+
+    <div class="row hidden" style="text-align: center" id="loader">
+      <h3 style="text-align: center;">Analysing</h3>
+      <div id="blockContainer" style="display: inline-block;">
+        <div id="block"></div>
+      </div>
+    </div>
+
+    <div class="row , hidden" id="analysisPanel" style="margin-top: 2cm;">
+      
+      <div class="col-md-3" style="text-align: center;">
+        <div class="row" style="text-align: center">
+          <button id='analysisButton' class="btn btn-primary disabled">
+            <i class="glyphicon glyphicon-eye-open"></i>
+            Analyse
+          </button>
+        </div>
+      </div>
+
+      <div class="col-md-3" style="text-align: center;">
+        Analysis window size:
+        <select id="analysisWindowInput">
+          <option value="1024">1024</option>
+          <option value="2048">2048</option>
+        </select>
+      </div>
+
+      <div class="col-md-3" style="text-align: center;">
+        Hop size input:
+        <select id="hopSizeInput">
+          <option value="128">128</option>
+          <option value="256">256</option>
+        </select>
+      </div>
+
+      <div class="col-md-3" style="text-align: center;">
+        <form>
+          Number of Sinusoids (between 8 and 32):
+          <input type="number" id="nSinesInput" name="quantity" value="16" min="8" max="32">
+        </form>
+      </div>
+    </div>
+
+    <div class="row , hidden" id="synthesisPanel" style="margin-top: 2cm;">
+
+      <div class="row" style="margin-top: 0.5cm;">
+        <div class="col-md-10 col-md-offset-1" style="text-align: center;">
+          <div class="row" style="text-align: center">
+            <button id='playButton' class="btn btn-primary disabled">
+              <i class="glyphicon glyphicon-play"></i>
+              Synthesise
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 0.5cm;">
+        <div class="col-md-6" style="text-align: center;">
+          <h4>Pitch</h4>
+          <input type="text" id="pitchInput" value="0" class="pitchDial">
+        </div>
+        <div class="col-md-6" style="text-align: center;">
+          <h4>Duration</h4>
+          <input type="text" id="timeInput" value="0" class="timeDial">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- <div class="row" style="text-align: center">
+        <div id="progressBar">
+          <div></div>
+        </div>
+      </div> -->
+
+    <div class="row" style="text-align: center">
+      <div class="col-md-6">
+        <div id="sineFreqDiv" style="width: 100%; height: 500px;"></div>
+      </div>
+      <div class="col-md-6">
+        <div id="sineAmpDiv" style="width: 100%; height: 500px;"></div>
+      </div>
+    </div>
+
+    <div class="row hidden" id="newButton" style="text-align: center">
+      <button class="btn btn-primary" onclick="location.reload();">
+        <i class="glyphicon glyphicon-refresh"></i>
+        New
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script type="text/javascript">
+
+  $(function () {
+    $(".pitchDial").knob({
+      'min': -100,
+      'max': 100,
+      'step': 1,
+      'angleOffset': 225,
+      'angleArc': 270,
+      'stopper': true,
+      'cursor': true,
+      "fgColor": "#428bca",
+      "skin": "tron",
+      'width': 100,
+      'fontWeight': 50
+    });
+    $(".timeDial").knob({
+      'min': -100,
+      'max': 100,
+      'step': 1,
+      'angleOffset': 225,
+      'angleArc': 270,
+      'stopper': true,
+      'cursor': true,
+      "fgColor": "#428bca",
+      "skin": "tron",
+      'width': 100,
+      'fontWeight': 50
+    });
+  });
+
+  var inputElement = document.getElementById("audioInput");
+  inputElement.addEventListener("change", handleFiles, false);
+
+  function handleFiles() {
+    $("#waveformControl").removeClass('hidden');
+    var files = this.files;
+    var file = URL.createObjectURL(files[0]);
+    console.log(file)
+    console.log(files)
+    wavesurfer.load(file);
+    loadSound(file)
+  }
+
+  document.getElementById('analysisButton').addEventListener('click', function () {
+    if (!data.audioArray || !data.sampleRate) {
+      console.warn('no audioArray or sampleRate found');
+      return;
+    }
+    if (data.bufferLength > 10) {
+      alert("Audio sample is too long. Please select a shorter sample.")
+    } else {
+      $("#loader").removeClass("hidden");
+      triggerAnalysis();
+    }
+  }, false);
+
+  $('#analysisPresetButton').on('click', function () {
+    var presetURL = $('#audioSelect').val()
+    console.log(presetURL);
+    $("#waveformControl").removeClass('hidden');
+    wavesurfer.load(presetURL);
+    loadSound(presetURL)
+  })
+</script>
+
+<!-- Wavesurfer function-->
+<script type="text/javascript" src="js/wavesurfer.js"></script>
+</body>
+</html>
